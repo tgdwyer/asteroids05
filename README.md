@@ -1,4 +1,5 @@
 # asteroids05
+[See the rest of the tutorial here.](https://tgdwyer.github.io/asteroids/)
 
 [Edit on StackBlitz ⚡️](https://stackblitz.com/edit/asteroids05)
 
