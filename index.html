@@ -1,0 +1,67 @@
+<html>
+  <head>
+    <style>
+  .ship {
+    fill: lightblue;
+  }
+  .booster {
+    fill: orange;
+  }
+  .hidden {
+    visibility:hidden;
+  }
+  .bullet {
+    fill: red;
+  }
+  .rock {
+    fill: burlywood;
+  }
+  .gameover {
+    font-family:sans-serif;
+    font-size:80px;
+    fill:red;
+  }
+  
+  .key {
+    width:18px;
+    text-align:center;
+    border-radius:3px;
+    background-color:lightgray;
+  }
+  .highlight {
+    background-color:pink;
+  }
+  div#controls {
+      float: right;
+      margin: 50px;
+  }
+    </style>
+  </head>
+<body>
+  <script src="/bundle.js"></script>
+  <svg id="svgCanvas" width="600" height="600" style="background-color:black">
+    <g id="ship" transform="translate(100,100)">
+    <polygon class="booster hidden" id="thruster" points="-3,20 0,35 3,20">
+    </polygon>
+    <polygon class="booster hidden" id="leftThrust" points="2,-10 15,-12 2,-14">
+    </polygon>
+    <polygon class="booster hidden" id="rightThrust" points="-2,-10 -15,-12 -2,-14">
+    </polygon>
+    <polygon class="ship" points="-15,20 15,20 0,-20">
+    </polygon>
+    </g>
+</svg>
+<div id="controls">
+<h2>Controls:</h2>
+<table>
+    <!-- <tr><td>Thrust</td><td>Up Arrow</td></tr> -->
+    <tr><td>Turn Left</td><td><div id="ArrowLeft" class="key">&#8678;</div></td></tr>
+    <tr><td>Turn Right</td><td><div id="ArrowRight" class="key">&#8680;</div></td></tr>
+    <tr><td>Thrust</td><td><div id="ArrowUp" class="key">&#8679;</div></td></tr>
+    <tr><td>Fire</td><td><div id="Space" class="key" style="width:50px">Space</div></td></tr>
+    <!-- <tr><td>Fire</td><td>Space</td>
+    <tr><td>Restart Game</td><td>F5</td></tr> -->
+</table>
+</div>
+</body>
+</html>
