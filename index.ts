@@ -183,22 +183,16 @@ function asteroids() {
     const 
       svg = document.getElementById("svgCanvas")!,
       ship = document.getElementById("ship")!,
-      leftThruster = document.getElementById("leftThrust")!,
-      rightThruster = document.getElementById("rightThrust")!,
-      thruster = document.getElementById("thruster")!,
-      show = (e:HTMLElement) => e.classList.remove('hidden'),
-      hide = (e:HTMLElement) => e.classList.add('hidden'),
+      show = (id:string,condition:boolean)=>((e:HTMLElement) => 
+        condition ? e.classList.remove('hidden')
+                  : e.classList.add('hidden'))(document.getElementById(id)!),
+
       attr = (e:Element,o:any) =>
         { for(const k in o) e.setAttribute(k,String(o[k])) }
     attr(ship,{transform:`translate(${s.ship.pos.x},${s.ship.pos.y}) rotate(${s.ship.angle})`});
-    if (s.ship.torque < 0) show(leftThruster);
-    else if (s.ship.torque > 0) show(rightThruster);
-    else {
-      hide(leftThruster);
-      hide(rightThruster);
-    }
-    if (s.ship.acc.len() > 0) show(thruster);
-    else hide(thruster);
+    show("leftThrust",  s.ship.torque<0);
+    show("rightThrust", s.ship.torque>0);
+    show("thruster",    s.ship.acc.len()>0);
     
     const updateBodyView = (b:Body) => {
       const createBodyView = ()=>{
