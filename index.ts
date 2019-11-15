@@ -264,7 +264,7 @@ class Vec {
  * @param a an array
  * @param f a function that produces an array
  */
-function flatMap<T,U>(a:T[],f:(a:T)=>U[]):U[] {
+function flatMap<T,U>(a:ReadonlyArray<T>,f:(a:T)=>U[]):U[] {
   return Array.prototype.concat(...a.map(f));
 }
 
