@@ -186,7 +186,6 @@ function asteroids() {
       show = (id:string,condition:boolean)=>((e:HTMLElement) => 
         condition ? e.classList.remove('hidden')
                   : e.classList.add('hidden'))(document.getElementById(id)!),
-
       attr = (e:Element,o:any) =>
         { for(const k in o) e.setAttribute(k,String(o[k])) }
     attr(ship,{transform:`translate(${s.ship.pos.x},${s.ship.pos.y}) rotate(${s.ship.angle})`});
