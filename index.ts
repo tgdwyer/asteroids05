@@ -193,7 +193,7 @@ function asteroids() {
       show = (id:string,condition:boolean)=>((e:HTMLElement) => 
         condition ? e.classList.remove('hidden')
                   : e.classList.add('hidden'))(document.getElementById(id)!),
-      attr = (e:Element,o:any) =>
+      attr = (e:Element,o:Object) =>
         { for(const k in o) e.setAttribute(k,String(o[k])) },
       updateBodyView = (b:Body) => {
         const createBodyView = ()=>{
