@@ -3,6 +3,6 @@
   "version": "0.0.0",
   "private": true,
   "dependencies": {
-    "rxjs": "^6.5.2"
+    "rxjs": "^7.3.0"
   }
 }
