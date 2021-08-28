@@ -55,19 +55,20 @@ function asteroids() {
     stopThrust = keyObservable('keyup','ArrowUp', ()=>new Thrust(false)),
     shoot = keyObservable('keydown','Space', ()=>new Shoot())
 
-  // Every object that participates in physics is a Body
-  type Body = Readonly<{
-    id:string,
+  type Circle = Readonly<{pos:Vec, radius:number}>
+  type ObjectId = Readonly<{id:string,createTime:number}>
+  interface IBody extends Circle, ObjectId {
     viewType: ViewType,
-    pos:Vec, 
     vel:Vec,
     acc:Vec,
     angle:number,
     rotation:number,
-    torque:number,
-    radius:number,
-    createTime:number
-  }>
+    torque:number
+  }
+
+  
+  // Every object that participates in physics is a Body
+  type Body = Readonly<IBody>
 
   // Game state
   type State = Readonly<{
@@ -81,17 +82,18 @@ function asteroids() {
   }>
 
   // Rocks and bullets are both just circles
-  const createCircle = (viewType: ViewType)=> (oid:number)=> (time:number)=> (radius:number)=> (pos:Vec)=> (vel:Vec)=>
+  const createCircle = (viewType: ViewType)=> (oid:ObjectId)=> (circ:Circle)=> (vel:Vec)=>
     <Body>{
-      createTime: time,
-      pos:pos,
+      ...oid,
+      ...circ,
       vel:vel,
       acc:Vec.Zero,
       angle:0, rotation:0, torque:0,
-      radius: radius,
-      id: viewType+oid,
+      id: viewType+oid.id,
       viewType: viewType
-    }
+    },
+    createRock = createCircle('rock'),
+    createBullet = createCircle('bullet')
 
   function createShip():Body {
     return {
@@ -110,9 +112,9 @@ function asteroids() {
 
   const
     startRocks = [...Array(Constants.StartRocksCount)]
-      .map((_,i)=>createCircle("rock")(i)
-         (Constants.StartTime)(Constants.StartRockRadius)(Vec.Zero)
-         (new Vec(0.5 - Math.random(), 0.5 - Math.random()))),
+      .map((_,i)=>createRock({id:String(i),createTime:Constants.StartTime})
+                            ({pos:Vec.Zero,radius:Constants.StartRockRadius})
+                            (new Vec(0.5 - Math.random(), 0.5 - Math.random()))),
 
     initialState:State = {
       time:0,
@@ -147,7 +149,7 @@ function asteroids() {
       const
         bodiesCollided = ([a,b]:[Body,Body]) => a.pos.sub(b.pos).len() < a.radius + b.radius,
         shipCollided = s.rocks.filter(r=>bodiesCollided([s.ship,r])).length > 0,
-        allBulletsAndRocks = flatMap(s.bullets, b=> s.rocks.map(r=>([b,r]))),
+        allBulletsAndRocks = flatMap(s.bullets, b=> s.rocks.map<[Body,Body]>(r=>([b,r]))),
         collidedBulletsAndRocks = allBulletsAndRocks.filter(bodiesCollided),
         collidedBullets = collidedBulletsAndRocks.map(([bullet,_])=>bullet),
         collidedRocks = collidedBulletsAndRocks.map(([_,rock])=>rock),
@@ -162,7 +164,8 @@ function asteroids() {
                               r.radius >= Constants.StartRockRadius/4 
                               ? [child(r,1), child(r,-1)] : [],
         newRocks = flatMap(collidedRocks, spawnChildren)
-          .map((r,i)=>createCircle('rock')(s.objCount + i)(s.time)(r.radius)(r.pos)(r.vel)),
+          .map((r,i)=>createRock({id:String(s.objCount + i),createTime:s.time})
+                      ({pos:r.pos,radius:r.radius})(r.vel)),
         cut = except((a:Body)=>(b:Body)=>a.id === b.id)
      
       return <State>{
@@ -201,9 +204,8 @@ function asteroids() {
       e instanceof Shoot ? {...s,
         bullets: s.bullets.concat([
               ((unitVec:Vec)=>
-                createCircle('bullet')(s.objCount)(s.time)
-                  (Constants.BulletRadius)
-                  (s.ship.pos.add(unitVec.scale(s.ship.radius)))
+                createBullet({id:String(s.objCount),createTime:s.time})
+                  ({radius:Constants.BulletRadius,pos:s.ship.pos.add(unitVec.scale(s.ship.radius))})
                   (s.ship.vel.add(unitVec.scale(Constants.BulletVelocity))))(Vec.unitVecInDirection(s.ship.angle))]),
         objCount: s.objCount + 1
       } : 
