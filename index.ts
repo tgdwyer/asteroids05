@@ -206,7 +206,8 @@ function asteroids() {
               ((unitVec:Vec)=>
                 createBullet({id:String(s.objCount),createTime:s.time})
                   ({radius:Constants.BulletRadius,pos:s.ship.pos.add(unitVec.scale(s.ship.radius))})
-                  (s.ship.vel.add(unitVec.scale(Constants.BulletVelocity))))(Vec.unitVecInDirection(s.ship.angle))]),
+                  (s.ship.vel.add(unitVec.scale(Constants.BulletVelocity)))
+               )(Vec.unitVecInDirection(s.ship.angle))]),
         objCount: s.objCount + 1
       } : 
       tick(s,e.elapsed)
