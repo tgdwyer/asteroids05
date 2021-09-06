@@ -111,10 +111,16 @@ function asteroids() {
   }
 
   const
+    // note: Math.random() is impure and non-deterministic (by design) it takes its seed from external state.
+    // if we wanted to use randomness inside the Observable streams below, it would be better to create a
+    // pseudo-random number sequence Observable that we have complete control over.
+    initialRocksDirections = [...Array(Constants.StartRocksCount)]
+      .map(()=>new Vec(0.5 - Math.random(), 0.5 - Math.random())),
+
     startRocks = [...Array(Constants.StartRocksCount)]
       .map((_,i)=>createRock({id:String(i),createTime:Constants.StartTime})
                             ({pos:Vec.Zero,radius:Constants.StartRockRadius})
-                            (new Vec(0.5 - Math.random(), 0.5 - Math.random()))),
+                            (initialRocksDirections[i])),
 
     initialState:State = {
       time:0,
