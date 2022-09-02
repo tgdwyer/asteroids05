@@ -363,7 +363,7 @@ const
  * @param e the Element
  * @param o a property bag
  */         
-  attr = (e:Element,o:Object) =>
+  attr = (e:Element,o:{ [key: string]: Object }) =>
     { for(const k in o) e.setAttribute(k,String(o[k])) }
 /**
  * Type guard for use in filters
