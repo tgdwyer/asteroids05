@@ -7,14 +7,14 @@ Observables allow us to capture asynchronous actions like user interface events 
 As an example we will build a little "Asteroids" game using Observables.  We're going to use [rxjs](https://rxjs-dev.firebaseapp.com/) as our Observable implementation, and we are going to render it in HTML using SVG.
 We're also going to take some pains to make pure functional code (and lots of beautiful curried lambda (arrow) functions). We'll use [typescript type annotations](https://www.typescriptlang.org/) to help us ensure that our data is indeed immutable and to guide us in plugging everything together without type errors.
  */
-import { fromEvent, interval, merge } from 'rxjs'; 
+import { fromEvent, interval, merge } from 'rxjs';
 import { map, filter, scan } from 'rxjs/operators';
 
 type Key = 'ArrowLeft' | 'ArrowRight' | 'ArrowUp' | 'Space'
 type Event = 'keydown' | 'keyup'
 
 function asteroids() {
-  const 
+  const
     Constants = {
       CanvasSize: 600,
       BulletExpirationTime: 1000,
@@ -35,8 +35,8 @@ function asteroids() {
   class Rotate { constructor(public readonly direction:number) {} }
   class Thrust { constructor(public readonly on:boolean) {} }
   class Shoot { constructor() {} }
-  
-  const 
+
+  const
     gameClock = interval(10)
       .pipe(map(elapsed=>new Tick(elapsed))),
 
@@ -66,7 +66,7 @@ function asteroids() {
     torque:number
   }
 
-  
+
   // Every object that participates in physics is a Body
   type Body = Readonly<IBody>
 
@@ -82,8 +82,7 @@ function asteroids() {
   }>
 
   // Rocks and bullets are both just circles
-  const createCircle = (viewType: ViewType)=> (oid:ObjectId)=> (circ:Circle)=> (vel:Vec)=>
-    <Body>{
+    const createCircle = (viewType: ViewType)=> (oid:ObjectId)=> (circ:Circle)=> (vel:Vec): Body => ({
       ...oid,
       ...circ,
       vel:vel,
@@ -91,9 +90,10 @@ function asteroids() {
       angle:0, rotation:0, torque:0,
       id: viewType+oid.id,
       viewType: viewType
-    },
-    createRock = createCircle('rock'),
-    createBullet = createCircle('bullet')
+    })
+
+   const createRock = createCircle('rock')
+   const createBullet = createCircle('bullet')
 
   function createShip():Body {
     return {
@@ -133,25 +133,25 @@ function asteroids() {
     },
 
     // wrap a positions around edges of the screen
-    torusWrap = ({x,y}:Vec) => { 
-      const s=Constants.CanvasSize, 
+    torusWrap = ({x,y}:Vec) => {
+      const s=Constants.CanvasSize,
         wrap = (v:number) => v < 0 ? v + s : v > s ? v - s : v;
       return new Vec(wrap(x),wrap(y))
     },
 
     // all movement comes through here
-    moveBody = (o:Body) => <Body>{
+        moveBody = (o:Body): Body => ({
       ...o,
       rotation: o.rotation + o.torque,
       angle:o.angle+o.rotation,
       pos:torusWrap(o.pos.add(o.vel)),
       vel:o.vel.add(o.acc)
-    },
-    
+        }),
+
     // check a State for collisions:
     //   bullets destroy rocks spawning smaller ones
     //   ship colliding with rock ends game
-    handleCollisions = (s:State) => {
+        handleCollisions = (s:State): State => {
       const
         bodiesCollided = ([a,b]:[Body,Body]) => a.pos.sub(b.pos).len() < a.radius + b.radius,
         shipCollided = s.rocks.filter(r=>bodiesCollided([s.ship,r])).length > 0,
@@ -167,14 +167,14 @@ function asteroids() {
           vel:r.vel.ortho().scale(dir)
         }),
         spawnChildren = (r:Body)=>
-                              r.radius >= Constants.StartRockRadius/4 
+                              r.radius >= Constants.StartRockRadius/4
                               ? [child(r,1), child(r,-1)] : [],
         newRocks = flatMap(collidedRocks, spawnChildren)
           .map((r,i)=>createRock({id:String(s.objCount + i),createTime:s.time})
                       ({pos:r.pos,radius:r.radius})(r.vel)),
         cut = except((a:Body)=>(b:Body)=>a.id === b.id)
-     
-      return <State>{
+
+            return {
         ...s,
         bullets: cut(s.bullets)(collidedBullets),
         rocks: cut(s.rocks)(collidedRocks).concat(newRocks),
@@ -185,14 +185,14 @@ function asteroids() {
     },
 
     // interval tick: bodies move, bullets expire
-    tick = (s:State,elapsed:number) => {
-      const 
+        tick = (s:State,elapsed:number): State => {
+      const
         expired = (b:Body)=>(elapsed - b.createTime) > 100,
         expiredBullets:Body[] = s.bullets.filter(expired),
         activeBullets = s.bullets.filter(not(expired));
-      return handleCollisions({...s, 
-        ship:moveBody(s.ship), 
-        bullets:activeBullets.map(moveBody), 
+      return handleCollisions({...s,
+        ship:moveBody(s.ship),
+        bullets:activeBullets.map(moveBody),
         rocks: s.rocks.map(moveBody),
         exit:expiredBullets,
         time:elapsed
@@ -215,7 +215,7 @@ function asteroids() {
                   (s.ship.vel.add(unitVec.scale(Constants.BulletVelocity)))
                )(Vec.unitVecInDirection(s.ship.angle))]),
         objCount: s.objCount + 1
-      } : 
+      } :
       tick(s,e.elapsed)
 
   // main game stream
@@ -229,21 +229,31 @@ function asteroids() {
       scan(reduceState, initialState))
     .subscribe(updateView)
 
-  // Update the svg scene.  
+  // Update the svg scene.
   // This is the only impure function in this program
   function updateView(s: State) {
-    const 
-      svg = document.getElementById("svgCanvas")!,
-      ship = document.getElementById("ship")!,
-      show = (id:string,condition:boolean)=>((e:HTMLElement) => 
-        condition ? e.classList.remove('hidden')
-                  : e.classList.add('hidden'))(document.getElementById(id)!),
-      updateBodyView = (b:Body) => {
+    const
+            svg = document.getElementById("svgCanvas"),
+            ship = document.getElementById("ship")
+
+        // if getElement is null, exit function early without doing anything
+        if (!svg || !ship) return
+
+        // document.getElementById can return null
+        // so use optional chaining to safely access method on element
+        const show = (id:string,condition:boolean)=>((e:HTMLElement | null) =>
+                condition ? e?.classList.remove('hidden')
+                    : e?.classList.add('hidden'))(document.getElementById(id))
+
+        // null checking above cannot apply in updateBodyView
+        // typescript cannot narrow the type down outside the scope because
+        // it can't guarantee that this function gets called synchronously
+        const updateBodyView =  (rootSVG: HTMLElement) => (b:Body) => {
         function createBodyView() {
-          const v = document.createElementNS(svg.namespaceURI, "ellipse")!;
+                    const v = document.createElementNS(rootSVG.namespaceURI, "ellipse");
           attr(v,{id:b.id,rx:b.radius,ry:b.radius});
           v.classList.add(b.viewType)
-          svg.appendChild(v)
+                    rootSVG.appendChild(v)
           return v;
         }
         const v = document.getElementById(b.id) || createBodyView();
@@ -253,15 +263,15 @@ function asteroids() {
     show("leftThrust",  s.ship.torque<0);
     show("rightThrust", s.ship.torque>0);
     show("thruster",    s.ship.acc.len()>0);
-     s.bullets.forEach(updateBodyView);
-    s.rocks.forEach(updateBodyView);
+        s.bullets.forEach(updateBodyView(svg));
+        s.rocks.forEach(updateBodyView(svg));
     s.exit.map(o=>document.getElementById(o.id))
           .filter(isNotNullOrUndefined)
           .forEach(v=>{
             try {
               svg.removeChild(v)
             } catch(e) {
-              // rarely it can happen that a bullet can be in exit 
+              // rarely it can happen that a bullet can be in exit
               // for both expiring and colliding in the same tick,
               // which will cause this exception
               console.log("Already removed: "+v.id)
@@ -269,21 +279,23 @@ function asteroids() {
           })
     if(s.gameOver) {
       subscription.unsubscribe();
-      const v = document.createElementNS(svg.namespaceURI, "text")!;
+            const v = document.createElementNS(svg.namespaceURI, "text");
       attr(v,{x:Constants.CanvasSize/6,y:Constants.CanvasSize/2,class:"gameover"});
       v.textContent = "Game Over";
       svg.appendChild(v);
     }
   }
-} 
+}
 
 //window.onload = asteroids;
 setTimeout(asteroids,0)
 
 function showKeys() {
   function showKey(k:Key) {
-    const arrowKey = document.getElementById(k)!,
-      o = (e:Event) => fromEvent<KeyboardEvent>(document,e).pipe(
+        const arrowKey = document.getElementById(k)
+        // getElement might be null, in this case return without doing anything
+        if (!arrowKey) return
+        const o = (e:Event) => fromEvent<KeyboardEvent>(document,e).pipe(
         filter(({code})=>code === k))
     o('keydown').subscribe(e => arrowKey.classList.add("highlight"))
     o('keyup').subscribe(_=>arrowKey.classList.remove("highlight"))
@@ -331,7 +343,7 @@ function flatMap<T,U>(
   return Array.prototype.concat(...a.map(f));
 }
 
-const 
+const
 /**
  * Composable not: invert boolean result of given function
  * @param f a function returning boolean
@@ -344,32 +356,31 @@ const
  * @param a an array that will be searched
  * @param e an element to search a for
  */
-  elem = 
-    <T>(eq: (_:T)=>(_:T)=>boolean)=> 
-      (a:ReadonlyArray<T>)=> 
+  elem =
+    <T>(eq: (_:T)=>(_:T)=>boolean)=>
+      (a:ReadonlyArray<T>)=>
         (e:T)=> a.findIndex(eq(e)) >= 0,
 /**
  * array a except anything in b
  * @param eq equality test function for two Ts
  * @param a array to be filtered
  * @param b array of elements to be filtered out of a
- */ 
-  except = 
+ */
+  except =
     <T>(eq: (_:T)=>(_:T)=>boolean)=>
-      (a:ReadonlyArray<T>)=> 
+      (a:ReadonlyArray<T>)=>
         (b:ReadonlyArray<T>)=> a.filter(not(elem(eq)(b))),
 /**
  * set a number of attributes on an Element at once
  * @param e the Element
  * @param o a property bag
- */         
-  attr = (e:Element,o:{ [key: string]: Object }) =>
+ */
+    attr = (e:Element,o: { [p:string]: unknown }) =>
     { for(const k in o) e.setAttribute(k,String(o[k])) }
 /**
  * Type guard for use in filters
  * @param input something that might be null or undefined
  */
-function isNotNullOrUndefined<T extends Object>(input: null | undefined | T): input is T {
+function isNotNullOrUndefined<T extends object>(input: null | undefined | T): input is T {
   return input != null;
 }
- 
