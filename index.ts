@@ -140,18 +140,18 @@ function asteroids() {
     },
 
     // all movement comes through here
-        moveBody = (o:Body): Body => ({
+    moveBody = (o:Body): Body => ({
       ...o,
       rotation: o.rotation + o.torque,
       angle:o.angle+o.rotation,
       pos:torusWrap(o.pos.add(o.vel)),
       vel:o.vel.add(o.acc)
-        }),
+    }),
 
     // check a State for collisions:
     //   bullets destroy rocks spawning smaller ones
     //   ship colliding with rock ends game
-        handleCollisions = (s:State): State => {
+    handleCollisions = (s:State): State => {
       const
         bodiesCollided = ([a,b]:[Body,Body]) => a.pos.sub(b.pos).len() < a.radius + b.radius,
         shipCollided = s.rocks.filter(r=>bodiesCollided([s.ship,r])).length > 0,
@@ -185,7 +185,7 @@ function asteroids() {
     },
 
     // interval tick: bodies move, bullets expire
-        tick = (s:State,elapsed:number): State => {
+    tick = (s:State,elapsed:number): State => {
       const
         expired = (b:Body)=>(elapsed - b.createTime) > 100,
         expiredBullets:Body[] = s.bullets.filter(expired),
@@ -216,7 +216,7 @@ function asteroids() {
                )(Vec.unitVecInDirection(s.ship.angle))]),
         objCount: s.objCount + 1
       } :
-      tick(s,e.elapsed)
+      tick(s,e.elapsed);
 
   // main game stream
   const subscription =
@@ -233,38 +233,38 @@ function asteroids() {
   // This is the only impure function in this program
   function updateView(s: State) {
     const
-            svg = document.getElementById("svgCanvas"),
-            ship = document.getElementById("ship")
+      svg = document.getElementById("svgCanvas"),
+      ship = document.getElementById("ship")
 
-        // if getElement is null, exit function early without doing anything
-        if (!svg || !ship) return
+    // if getElement is null, exit function early without doing anything
+    if (!svg || !ship) return
 
-        // document.getElementById can return null
-        // so use optional chaining to safely access method on element
-        const show = (id:string,condition:boolean)=>((e:HTMLElement | null) =>
-                condition ? e?.classList.remove('hidden')
-                    : e?.classList.add('hidden'))(document.getElementById(id))
+    // document.getElementById can return null
+    // so use optional chaining to safely access method on element
+    const show = (id:string,condition:boolean)=>((e:HTMLElement | null) =>
+            condition ? e?.classList.remove('hidden')
+                : e?.classList.add('hidden'))(document.getElementById(id))
 
-        // null checking above cannot apply in updateBodyView
-        // typescript cannot narrow the type down outside the scope because
-        // it can't guarantee that this function gets called synchronously
-        const updateBodyView =  (rootSVG: HTMLElement) => (b:Body) => {
-        function createBodyView() {
-                    const v = document.createElementNS(rootSVG.namespaceURI, "ellipse");
-          attr(v,{id:b.id,rx:b.radius,ry:b.radius});
-          v.classList.add(b.viewType)
-                    rootSVG.appendChild(v)
-          return v;
-        }
-        const v = document.getElementById(b.id) || createBodyView();
-        attr(v,{cx:b.pos.x,cy:b.pos.y});
-      };
+    // null checking above cannot apply in updateBodyView
+    // typescript cannot narrow the type down outside the scope because
+    // it can't guarantee that this function gets called synchronously
+    const updateBodyView =  (rootSVG: HTMLElement) => (b:Body) => {
+      function createBodyView() {
+                  const v = document.createElementNS(rootSVG.namespaceURI, "ellipse");
+        attr(v,{id:b.id,rx:b.radius,ry:b.radius});
+        v.classList.add(b.viewType)
+                  rootSVG.appendChild(v)
+        return v;
+      }
+      const v = document.getElementById(b.id) || createBodyView();
+      attr(v,{cx:b.pos.x,cy:b.pos.y});
+    };
     attr(ship,{transform:`translate(${s.ship.pos.x},${s.ship.pos.y}) rotate(${s.ship.angle})`});
     show("leftThrust",  s.ship.torque<0);
     show("rightThrust", s.ship.torque>0);
     show("thruster",    s.ship.acc.len()>0);
-        s.bullets.forEach(updateBodyView(svg));
-        s.rocks.forEach(updateBodyView(svg));
+    s.bullets.forEach(updateBodyView(svg));
+    s.rocks.forEach(updateBodyView(svg));
     s.exit.map(o=>document.getElementById(o.id))
           .filter(isNotNullOrUndefined)
           .forEach(v=>{
